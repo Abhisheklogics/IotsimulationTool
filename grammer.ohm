@@ -1,0 +1,11 @@
+
+  ArduinoGrammer {
+    Program = Declaration Loop
+    Declaration = "int" "ledPin" "=" digit+ ";"  --declaration
+    Loop = "void" "loop" "(" ")" "{" Statement+ "}"
+    Statement = TurnOn | TurnOff | Wait
+    TurnOn = "digitalWrite" "(" "ledPin" "," "HIGH" ")" ";"  --turnOn
+    TurnOff = "digitalWrite" "(" "ledPin" "," "LOW" ")" ";"  --turnOff
+    Wait = "delay" "(" digit+ ")" ";"  --wait
+  }
+

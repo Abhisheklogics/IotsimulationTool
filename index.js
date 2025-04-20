@@ -1,0 +1,382 @@
+const mainBox = document.querySelector('.mainBox');
+const workspace = document.querySelector('#svg1');
+const btn = document.querySelector('#btn');
+const btn1 = document.querySelector('#btn1');
+const text = document.querySelector('#codeInput');
+const runCodeSimulation = document.querySelector('#btn2');
+let activeElement = null;
+let offsetX = 0;
+let offsetY = 0;
+let isDrawing = false;
+let currentWire = null; 
+const pinsArray = []; // Store pin metadata
+  
+
+
+const grammar = ohm.grammar(`
+  Arduino {
+    Program = Setup Loop
+    Setup = "void" "setup" "()" Block
+    Loop = "void" "loop" "()" Block
+    Block = "{" Statement* "}"
+    Statement = PinMode | DigitalWrite | Delay
+    PinMode = "pinMode" "(" Number "," Mode ")" ";"
+    DigitalWrite = "digitalWrite" "(" Number "," State ")" ";"
+    Delay = "delay" "(" Number ")" ";"
+    Mode = "OUTPUT" | "INPUT"
+    State = "HIGH" | "LOW"
+    Number = digit+
+  }
+`);
+
+const semantics = grammar.createSemantics().addOperation("eval", {
+  Program(setup, loop) {
+    return {
+      setup: setup.eval(),
+      loop: loop.eval()
+    };
+  },
+  Setup(_1, _2, _3, block) {
+    return block.eval();
+  },
+  Loop(_1, _2, _3, block) {
+    return block.eval();
+  },
+  Block(_1, statements, _2) {
+    return statements.children.map(s => s.eval());
+  },
+  PinMode(_1, _2, pin, _3, mode, _4, _5) {
+    return { type: "pinMode", pin: parseInt(pin.sourceString), mode: mode.sourceString };
+  },
+  DigitalWrite(_1, _2, pin, _3, state, _4, _5) {
+    return { type: "digitalWrite", pin: parseInt(pin.sourceString), state: state.sourceString };
+  },
+  Delay(_1, _2, num, _3, _4) {
+    return { type: "wait", delay: parseInt(num.sourceString) };
+  },
+  Mode(_) {
+    return this.sourceString;
+  },
+  State(_) {
+    return this.sourceString;
+  },
+  Number(_) {
+    return parseInt(this.sourceString);
+  }
+});
+
+async function runCode() {
+  const code = document.getElementById("codeInput").value;
+  const match = grammar.match(code);
+
+  if (match.succeeded()) {
+    const result = semantics(match).eval();
+    await simulate(result.setup);
+    simulateLoop(result.loop);
+  } else {
+    alert("Syntax error in code!");
+  }
+}
+
+function beep(duration = 500, frequency = 1000, volume = 1, type = "square") {
+  const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  const oscillator = audioCtx.createOscillator();
+  const gainNode = audioCtx.createGain();
+
+  oscillator.connect(gainNode);
+  gainNode.connect(audioCtx.destination);
+
+  oscillator.frequency.value = frequency;
+  oscillator.type = type;
+  gainNode.gain.value = volume;
+
+  oscillator.start();
+  setTimeout(() => {
+    oscillator.stop();
+    audioCtx.close();
+  }, duration);
+}
+
+async function simulate(commands) {
+  const ledImg = document.getElementById("led");
+  const buzzer = document.getElementById("buzzer");
+
+  for (const cmd of commands) {
+    if (cmd.type === "digitalWrite") {
+      if (cmd.pin === 13) {
+      
+        ledImg.style.filter = cmd.state === "HIGH" ? "brightness(1.4)" : "brightness(0)";
+      } else if (cmd.pin === 8) {
+        
+        if (cmd.state === "HIGH") {
+         beep(cmd.delay);
+        } 
+      }
+    } else if (cmd.type === "wait") {
+      await new Promise(res => setTimeout(res, cmd.delay));
+    }
+  }
+}
+
+async function simulateLoop(commands) {
+  while (true) {
+    await simulate(commands);
+  }
+}   
+
+
+
+    
+btn.addEventListener('click',()=>{
+  text.style.display='block'
+  text.style.height='200px'
+  text.style.position='absolute'
+  text.style.left='700px'
+  
+
+})
+
+btn1.addEventListener('click',()=>{
+  text.style.display='none'
+  
+})
+const connections = [];
+
+
+function createPin(svg, x, y, width = 10, height = 10, pinNumber = '') {
+  const pin = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+  pin.setAttribute('x', x);
+  pin.setAttribute('y', y);
+  pin.setAttribute('width', width);
+  pin.setAttribute('height', height);
+  pin.setAttribute('fill', 'black');
+  pin.setAttribute('class', 'connection-point');
+  pin.setAttribute('data-pin', pinNumber); 
+
+  const tooltip = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+tooltip.setAttribute('x', x + 12);
+tooltip.setAttribute('y', y);
+tooltip.setAttribute('visibility', 'hidden');
+tooltip.setAttribute('font-size', '14'); 
+tooltip.setAttribute('fill', 'blue');
+tooltip.textContent = `${pinNumber}`;
+
+
+
+  pin.addEventListener('mouseenter', () => tooltip.setAttribute('visibility', 'visible'));
+  pin.addEventListener('mouseleave', () => tooltip.setAttribute('visibility', 'hidden'));
+
+  pin.addEventListener('mousedown', (e) => startWire(e, pin));
+
+  svg.appendChild(pin);
+  svg.appendChild(tooltip);
+
+  
+  pinsArray.push({
+    pinNumber,
+    pinElement: pin,
+    component: svg.querySelector('image')?.getAttribute('id') || 'unknown'
+  });
+ 
+}
+
+
+
+function createSvgComponent(path, width, height, x = 670, y = 10) {
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  const image = document.createElementNS('http://www.w3.org/2000/svg', 'image');
+
+  svg.setAttribute('width', width);
+  svg.setAttribute('height', height);
+  svg.setAttribute('class', 'draggable');
+  svg.setAttribute('x', x);
+  svg.setAttribute('y', y);
+
+  image.setAttribute('href', path);
+  image.setAttribute('width', width);
+  image.setAttribute('height', height);
+  svg.appendChild(image);
+
+
+  if (path.includes('Arduino')) {
+    image.setAttribute('id','arduino');
+    for (let i = 0; i < 7; i++) {
+      createPin(svg, 230 + i *14, height - 32, 10, 10, `D${i}`); 
+      createPin(svg, 180 + i *14, height -278, 10, 10, `A${i}`); 
+      createPin(svg, 330 + i *14, height - 32, 10, 10, `P${i}`); 
+      createPin(svg, 330 + i *14, height -278, 10, 10, `X${i}`); 
+    }
+  } else if (path.includes('led')) {
+    image.style.filter=`brightness(0)`
+    image.setAttribute('id','led');
+    createPin(svg, width / 2 - 10, 70, 10, 10, 'Cathode'); 
+    createPin(svg, width / 2 + 2, 80, 10, 10, 'Anode'); 
+  }
+  else if (path.includes('buuzer')) {
+   
+    createPin(svg, width / 2 - 13, 220, 10, 10, 'Cathode'); 
+    createPin(svg, width / 2 + 1, 220, 10, 10, 'Anode'); 
+  }
+  
+
+  svg.addEventListener('mousedown', startDrag);
+  document.removeEventListener('mousemove', drag);
+  workspace.appendChild(svg);
+}
+
+
+function startDrag(e) {
+  if (isDrawing) return; 
+
+  activeElement = e.currentTarget;
+ 
+  offsetX = e.clientX - parseInt(activeElement.getAttribute('x'), 10);
+  offsetY = e.clientY - parseInt(activeElement.getAttribute('y'), 10);
+
+  document.addEventListener('mousemove', drag);
+  document.addEventListener('mouseup', stopDrag);
+}
+
+function drag(e) {
+  if (activeElement) {
+    const x = e.clientX - offsetX;
+    const y = e.clientY - offsetY;
+    activeElement.setAttribute('x', x);
+    activeElement.setAttribute('y', y);
+
+  
+    updateWires(activeElement);
+  }
+}
+
+function stopDrag() {
+  activeElement = null;
+  document.removeEventListener('mousemove', drag);
+  document.removeEventListener('mouseup', stopDrag);
+}
+
+function startWire(e, pin) {
+  e.stopPropagation();
+  isDrawing = true;
+console.log(pin)
+ 
+  const workspaceRect = workspace.getBoundingClientRect();
+  console.log(workspaceRect)
+  const pinRect = pin.getBoundingClientRect();
+
+
+  const startX = pinRect.x + pin.width.baseVal.value / 2 - workspaceRect.x;
+  
+  const startY = pinRect.y + pin.height.baseVal.value / 2 - workspaceRect.y;
+  console.log(startX,startY)
+  currentWire = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+  currentWire.setAttribute('x1', startX);
+  currentWire.setAttribute('y1', startY);
+  currentWire.setAttribute('x2', startX);
+  currentWire.setAttribute('y2', startY);
+ currentWire.setAttribute('stroke', 'blue')
+  
+  currentWire.setAttribute('stroke-width', 2);
+  currentWire.startPin = pin; 
+
+  workspace.appendChild(currentWire);
+
+  workspace.addEventListener('mousemove', drawWire);
+  workspace.addEventListener('mouseup', finishWire);
+}
+
+
+function drawWire(e) {
+  if (isDrawing && currentWire) {
+   
+    const workspaceRect = workspace.getBoundingClientRect();
+
+    
+    const x2 = e.clientX - workspaceRect.x;
+    const y2 = e.clientY - workspaceRect.y;
+   
+
+    currentWire.setAttribute('x2', x2);
+    currentWire.setAttribute('y2', y2);
+  }
+
+}
+function finishWire(e) {
+  isDrawing = false;
+
+  const target = e.target;
+ 
+  if (target.classList.contains('connection-point')) {
+    const workspaceRect = workspace.getBoundingClientRect();
+    const pinRect = target.getBoundingClientRect();
+
+    const endX = pinRect.x + target.width.baseVal.value / 2 - workspaceRect.x;
+    const endY = pinRect.y + target.height.baseVal.value / 2 - workspaceRect.y;
+
+    currentWire.setAttribute('x2', endX);
+    currentWire.setAttribute('y2', endY);
+    currentWire.endPin = target; 
+   
+   
+    connections.push({
+      wire: currentWire,
+      startPin: currentWire.startPin,
+      endPin: currentWire.endPin,
+    });
+    if(connections.length > 0)
+      {
+        runCodeSimulation.addEventListener('click',()=>{
+          runCode()
+        })
+      }
+  } else {
+   
+    workspace.removeChild(currentWire);
+  }
+
+  workspace.removeEventListener('mousemove', drawWire);
+  workspace.removeEventListener('mouseup', finishWire);
+  
+  currentWire = null;
+}
+
+function updateWires(component) {
+
+  connections.forEach(({ wire, startPin, endPin }) => {
+  
+    if (component.contains(startPin)) {
+      const workspaceRect = workspace.getBoundingClientRect();
+      const pinRect = startPin.getBoundingClientRect();
+      const x1 = pinRect.x + startPin.width.baseVal.value / 2 - workspaceRect.x;
+      const y1 = pinRect.y + startPin.height.baseVal.value / 2 - workspaceRect.y;
+
+      wire.setAttribute('x1', x1);
+      wire.setAttribute('y1', y1);
+    }
+
+   
+    if (component.contains(endPin)) {
+      const workspaceRect = workspace.getBoundingClientRect();
+      const pinRect = endPin.getBoundingClientRect();
+      const x2 = pinRect.x + endPin.width.baseVal.value / 2 - workspaceRect.x;
+      const y2 = pinRect.y + endPin.height.baseVal.value / 2 - workspaceRect.y;
+
+      wire.setAttribute('x2', x2);
+      wire.setAttribute('y2', y2);
+      
+    }
+  });
+}
+
+
+mainBox.addEventListener('mousedown', (e) => {
+  const target = e.target;
+  if (target.id === 'led') {
+    createSvgComponent('led.png', 100, 100);
+  } else if (target.id === 'arduino') {
+    createSvgComponent('ArduinoUno.svg.png', 500, 300, 400, 110);
+  }
+  else if (target.id === 'buzzer') {
+    createSvgComponent('buuzer.png', 150, 300, 400, 110);
+  }
+})
