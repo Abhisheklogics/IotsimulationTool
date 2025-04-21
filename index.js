@@ -9,7 +9,7 @@ let offsetX = 0;
 let offsetY = 0;
 let isDrawing = false;
 let currentWire = null; 
-const pinsArray = []; // Store pin metadata
+const pinsArray = []; 
   
 
 
@@ -19,40 +19,51 @@ const grammar = ohm.grammar(`
     Setup = "void" "setup" "()" Block
     Loop = "void" "loop" "()" Block
     Block = "{" Statement* "}"
-    Statement = PinMode | DigitalWrite | Delay
-    PinMode = "pinMode" "(" Number "," Mode ")" ";"
-    DigitalWrite = "digitalWrite" "(" Number "," State ")" ";"
-    Delay = "delay" "(" Number ")" ";"
+    Statement = VarDecl | PinMode | DigitalWrite | Delay
+    VarDecl = "int" ident "=" Number ";"
+    PinMode = "pinMode" "(" Expr "," Mode ")" ";"
+    DigitalWrite = "digitalWrite" "(" Expr "," State ")" ";"
+    Delay = "delay" "(" Expr ")" ";"
     Mode = "OUTPUT" | "INPUT"
     State = "HIGH" | "LOW"
+    Expr = ident | Number
+    ident = letter alnum*
     Number = digit+
   }
 `);
-
-const semantics = grammar.createSemantics().addOperation("eval", {
+const semantics = grammar.createSemantics().addOperation("eval(memory)", {
   Program(setup, loop) {
+    const memory = {};
     return {
-      setup: setup.eval(),
-      loop: loop.eval()
+      setup: setup.eval(memory),
+      loop: loop.eval(memory)
     };
   },
   Setup(_1, _2, _3, block) {
-    return block.eval();
+    return block.eval(this.args.memory);
   },
   Loop(_1, _2, _3, block) {
-    return block.eval();
+    return block.eval(this.args.memory);
   },
   Block(_1, statements, _2) {
-    return statements.children.map(s => s.eval());
+    return statements.children.map(s => s.eval(this.args.memory));
+  },
+  VarDecl(_int, id, _eq, num, _semi) {
+    const name = id.sourceString;
+    this.args.memory[name] = parseInt(num.sourceString);
+    return { type: "declare", name, value: this.args.memory[name] };
   },
   PinMode(_1, _2, pin, _3, mode, _4, _5) {
-    return { type: "pinMode", pin: parseInt(pin.sourceString), mode: mode.sourceString };
+    const pinVal = pin.eval(this.args.memory);
+    return { type: "pinMode", pin: pinVal, mode: mode.sourceString };
   },
   DigitalWrite(_1, _2, pin, _3, state, _4, _5) {
-    return { type: "digitalWrite", pin: parseInt(pin.sourceString), state: state.sourceString };
+    const pinVal = pin.eval(this.args.memory);
+    return { type: "digitalWrite", pin: pinVal, state: state.sourceString };
   },
-  Delay(_1, _2, num, _3, _4) {
-    return { type: "wait", delay: parseInt(num.sourceString) };
+  Delay(_1, _2, val, _3, _4) {
+    const delayVal = val.eval(this.args.memory);
+    return { type: "wait", delay: delayVal };
   },
   Mode(_) {
     return this.sourceString;
@@ -60,23 +71,38 @@ const semantics = grammar.createSemantics().addOperation("eval", {
   State(_) {
     return this.sourceString;
   },
+  Expr(expr) {
+    if (expr.ctorName === "ident") {
+      const name = expr.sourceString;
+      if (this.args.memory.hasOwnProperty(name)) {
+        return this.args.memory[name];
+      } else {
+        throw new Error(`Undefined variable: ${name}`);
+      }
+    }
+    return parseInt(expr.sourceString);
+  },
+  ident(_first, _rest) {
+    return this.sourceString;
+  },
   Number(_) {
     return parseInt(this.sourceString);
   }
 });
-
 async function runCode() {
   const code = document.getElementById("codeInput").value;
   const match = grammar.match(code);
 
   if (match.succeeded()) {
-    const result = semantics(match).eval();
+    const memory = {};
+    const result = semantics(match).eval(memory);
     await simulate(result.setup);
     simulateLoop(result.loop);
   } else {
     alert("Syntax error in code!");
   }
 }
+
 
 function beep(duration = 500, frequency = 1000, volume = 1, type = "square") {
   const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -109,6 +135,7 @@ async function simulate(commands) {
       } else if (cmd.pin === 8) {
         
         if (cmd.state === "HIGH") {
+          
          beep(cmd.delay);
         } 
       }
@@ -301,6 +328,7 @@ function drawWire(e) {
   }
 
 }
+
 function finishWire(e) {
   isDrawing = false;
 
