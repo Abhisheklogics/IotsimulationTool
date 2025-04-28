@@ -12,7 +12,7 @@ let currentWire = null;
 const pinsArray = []; 
   
 
-
+// ye code arduino ki compiler ki grammer bata hai
 const grammar = ohm.grammar(`
   Arduino {
     Program = Setup Loop
@@ -103,42 +103,23 @@ async function runCode() {
   }
 }
 
-
-function beep(duration = 500, frequency = 1000, volume = 1, type = "square") {
-  const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  const oscillator = audioCtx.createOscillator();
-  const gainNode = audioCtx.createGain();
-
-  oscillator.connect(gainNode);
-  gainNode.connect(audioCtx.destination);
-
-  oscillator.frequency.value = frequency;
-  oscillator.type = type;
-  gainNode.gain.value = volume;
-
-  oscillator.start();
-  setTimeout(() => {
-    oscillator.stop();
-    audioCtx.close();
-  }, duration);
-}
-
 async function simulate(commands) {
   const ledImg = document.getElementById("led");
-  const buzzer = document.getElementById("buzzer");
+  
 
   for (const cmd of commands) {
     if (cmd.type === "digitalWrite") {
-      if (cmd.pin === 13) {
+      if (cmd.pin == connections[0].endPin.dataset.pin) {
       
         ledImg.style.filter = cmd.state === "HIGH" ? "brightness(1.4)" : "brightness(0)";
-      } else if (cmd.pin === 8) {
-        
-        if (cmd.state === "HIGH") {
-          
-         beep(cmd.delay);
-        } 
       }
+      else{
+        
+        setTimeout(()=>{
+          alert('sahi se connection karo ')
+          document.removeEventListener('click',runCode)
+        },300)
+      } 
     } else if (cmd.type === "wait") {
       await new Promise(res => setTimeout(res, cmd.delay));
     }
@@ -150,9 +131,6 @@ async function simulateLoop(commands) {
     await simulate(commands);
   }
 }   
-
-
-
     
 btn.addEventListener('click',()=>{
   text.style.display='block'
@@ -168,7 +146,7 @@ btn1.addEventListener('click',()=>{
   
 })
 const connections = [];
-
+ // pin crate karta hai arduino or leds par 
 
 function createPin(svg, x, y, width = 10, height = 10, pinNumber = '') {
   const pin = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
@@ -208,8 +186,8 @@ tooltip.textContent = `${pinNumber}`;
 }
 
 
-
-function createSvgComponent(path, width, height, x = 670, y = 10) {
+// click event par svg arduino or led jasi component create kara na ka logic
+function createSvgComponent(path, width, height, x = 1000, y = 10) {
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   const image = document.createElementNS('http://www.w3.org/2000/svg', 'image');
 
@@ -228,10 +206,13 @@ function createSvgComponent(path, width, height, x = 670, y = 10) {
   if (path.includes('Arduino')) {
     image.setAttribute('id','arduino');
     for (let i = 0; i < 7; i++) {
-      createPin(svg, 230 + i *14, height - 32, 10, 10, `D${i}`); 
-      createPin(svg, 180 + i *14, height -278, 10, 10, `A${i}`); 
-      createPin(svg, 330 + i *14, height - 32, 10, 10, `P${i}`); 
-      createPin(svg, 330 + i *14, height -278, 10, 10, `X${i}`); 
+      createPin(svg, 346 + i *11, height - 32, 10, 10, `A${i}`); 
+      createPin(svg, 270 + 10, 268 , 11, 10, `5v`); 
+      createPin(svg, 270 + 24, 268 , 11, 10, `GND`);
+      createPin(svg, 265, 268 , 11, 10, `3v`);
+      createPin(svg, 346 + i *11,  22, 10, 10, `${i}`); 
+      createPin(svg, 234 ,  22, 10, 10, `13`);
+      createPin(svg, 220 ,  22, 10, 10, ` GND`);
     }
   } else if (path.includes('led')) {
     image.style.filter=`brightness(0)`
@@ -250,7 +231,7 @@ function createSvgComponent(path, width, height, x = 670, y = 10) {
   document.removeEventListener('mousemove', drag);
   workspace.appendChild(svg);
 }
-
+// components ko dag karne ka logic
 
 function startDrag(e) {
   if (isDrawing) return; 
@@ -263,7 +244,7 @@ function startDrag(e) {
   document.addEventListener('mousemove', drag);
   document.addEventListener('mouseup', stopDrag);
 }
-
+// mousemove se componets ko screen me gumane ka logic
 function drag(e) {
   if (activeElement) {
     const x = e.clientX - offsetX;
@@ -275,13 +256,13 @@ function drag(e) {
     updateWires(activeElement);
   }
 }
-
+// mouseup yaani mouse ko chodhene par drag svg ruk jaye wahi
 function stopDrag() {
   activeElement = null;
   document.removeEventListener('mousemove', drag);
   document.removeEventListener('mouseup', stopDrag);
 }
-
+// wire ko startdrag karne ka logic
 function startWire(e, pin) {
   e.stopPropagation();
   isDrawing = true;
@@ -295,14 +276,14 @@ console.log(pin)
   const startX = pinRect.x + pin.width.baseVal.value / 2 - workspaceRect.x;
   
   const startY = pinRect.y + pin.height.baseVal.value / 2 - workspaceRect.y;
-  console.log(startX,startY)
+  
   currentWire = document.createElementNS('http://www.w3.org/2000/svg', 'line');
   currentWire.setAttribute('x1', startX);
   currentWire.setAttribute('y1', startY);
   currentWire.setAttribute('x2', startX);
   currentWire.setAttribute('y2', startY);
  currentWire.setAttribute('stroke', 'blue')
-  
+ 
   currentWire.setAttribute('stroke-width', 2);
   currentWire.startPin = pin; 
 
@@ -311,7 +292,7 @@ console.log(pin)
   workspace.addEventListener('mousemove', drawWire);
   workspace.addEventListener('mouseup', finishWire);
 }
-
+// wire ko mousemove par uske x y position badlana taki vo wire ki tarah bada ho sake mousemove par
 
 function drawWire(e) {
   if (isDrawing && currentWire) {
@@ -328,7 +309,7 @@ function drawWire(e) {
   }
 
 }
-
+// wire finesh karte wqt x y or posotions ko store karna 
 function finishWire(e) {
   isDrawing = false;
 
@@ -350,7 +331,11 @@ function finishWire(e) {
       wire: currentWire,
       startPin: currentWire.startPin,
       endPin: currentWire.endPin,
+     
     });
+    
+    console.log(connections[0].endPin.dataset.pin)
+   
     if(connections.length > 0)
       {
         runCodeSimulation.addEventListener('click',()=>{
@@ -367,7 +352,7 @@ function finishWire(e) {
   
   currentWire = null;
 }
-
+// esme vo logic hai jab componenst par jab wire lag jaye fir components ko drag kiya jaye to wire ke x or y position badle drag  components ke hisab se ye importanat hai 
 function updateWires(component) {
 
   connections.forEach(({ wire, startPin, endPin }) => {
@@ -402,9 +387,9 @@ mainBox.addEventListener('mousedown', (e) => {
   if (target.id === 'led') {
     createSvgComponent('led.png', 100, 100);
   } else if (target.id === 'arduino') {
-    createSvgComponent('ArduinoUno.svg.png', 500, 300, 400, 110);
+    createSvgComponent('ArduinoUno.svg.png', 500, 300, 700, 110);
   }
   else if (target.id === 'buzzer') {
-    createSvgComponent('buuzer.png', 150, 300, 400, 110);
+    createSvgComponent('buuzer.png', 150, 300, 1000, 110);
   }
 })
