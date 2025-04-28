@@ -118,7 +118,7 @@ async function simulate(commands) {
         setTimeout(()=>{
           alert('sahi se connection karo ')
           document.removeEventListener('click',runCode)
-        },300)
+        },1000)
       } 
     } else if (cmd.type === "wait") {
       await new Promise(res => setTimeout(res, cmd.delay));
