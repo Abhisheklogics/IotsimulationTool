@@ -6,194 +6,212 @@
   <title>Tinkercad-like Wiring</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet" />
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: 'Roboto', sans-serif;
-    }
 
-    body {
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-      background-color: #f5f5f5;
-    }
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Roboto', sans-serif;
+}
 
-    nav {
-      background-color: #007bff;
-      color: white;
-      padding: 15px 30px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 20px;
-      font-weight: bold;
-    }
+body {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background-color: #e6ecf0;
+}
 
-    .nav-buttons {
-      display: flex;
-      gap: 10px;
-    }
 
-    .nav-buttons button {
-      padding: 8px 15px;
-      background-color: #0056b3;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      font-size: 14px;
-      cursor: pointer;
-      transition: background-color 0.3s ease;
-    }
+nav {
+  background-color: #0d47a1;
+  color: white;
+  padding: 15px 30px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 20px;
+  font-weight: bold;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
 
-    .nav-buttons button:hover {
-      background-color: #003d80;
-    }
+.nav-buttons {
+  display: flex;
+  gap: 10px;
+}
 
-    .workspaceContainer {
-      display: flex;
-      flex: 1;
-      height: 100%;
-    }
+.nav-buttons button {
+  padding: 8px 15px;
+  background-color: #1565c0;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
 
-    .controlPanel {
-      width: 300px;
-      background-color: #ffffff;
-      border-right: 2px solid #ddd;
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
-      height: 100%;
-    }
+.nav-buttons button:active {
+  background-color: #2a2c30;
+}
 
-    .controlPanel h3 {
-      font-size: 18px;
-      color: #333;
-    }
 
-    .controlPanel button {
-      padding: 10px;
-      background-color: #007bff;
-      color: #fff;
-      border: none;
-      border-radius: 5px;
-      font-size: 16px;
-      cursor: pointer;
-    }
+.workspaceContainer {
+  display: flex;
+  flex: 1;
+  height: 100%;
+}
 
-    .controlPanel button:hover {
-      background-color: #0056b3;
-    }
 
-    .controlPanel textarea {
-      width: 100%;
-      height: 150px;
-      border: 1px solid #ddd;
-      border-radius: 5px;
-      font-size: 14px;
-      padding: 10px;
-      resize: none;
-      font-family: 'Roboto Mono', monospace;
-    }
+.controlPanel {
+  width: 300px;
+  background-color: #fefefe;
+  border-right: 2px solid #ccc;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  height: 100%;
+  box-shadow: inset -2px 0 5px rgba(0, 0, 0, 0.05);
+}
 
-    .controlPanel textarea:focus {
-      outline: 2px solid #007bff;
-    }
+.controlPanel h3 {
+  font-size: 18px;
+  color: #444;
+}
 
-    #svg1 {
-      flex-grow: 1;
-      background-color: #ffffff;
-      border: 2px dashed #ddd;
-      margin: 10px;
-      position: relative;
-    }
+.controlPanel button {
+  padding: 10px;
+  background-color: #0288d1;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
 
-    .mainBox {
-      width: 220px;
-      background-color: #ffffff;
-      border-left: 2px solid #ddd;
-      padding: 20px;
-      overflow-y: auto;
-      height: 100%;
-    }
+.controlPanel button:hover {
+  background-color: #0277bd;
+}
 
-    .mainBox h3 {
-      margin-bottom: 20px;
-      font-size: 18px;
-      color: #333;
-      text-align: center;
-    }
+.controlPanel textarea {
+  width: 100%;
+  height: 150px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+  padding: 10px;
+  resize: none;
+  font-family: 'Roboto Mono', monospace;
+  background-color: #f9f9f9;
+}
 
-    .mainBox svg {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      margin-bottom: 30px;
-      cursor: grab;
-    }
 
-    svg image {
-      margin-top: 10px;
-    }
+#svg1 {
+  flex-grow: 1;
+  background-color: #fff;
+  border: 2px dashed #bbb;
+  margin: 10px;
+  position: relative;
+  border-radius: 10px;
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.05);
+}
 
-    .connection-point {
-      cursor: pointer;
-      transition: transform 0.2s;
-    }
 
-    .connection-point:hover {
-      fill: royalblue;
-    }
+.mainBox {
+  width: 250px;
+  background-color: #ffffff;
+  border-left: 2px solid #ccc;
+  padding: 20px;
+  overflow-y: auto;
+  height: 100%;
+  box-shadow: inset 2px 0 5px rgba(0, 0, 0, 0.05);
+}
 
-    .led-on {
-      fill: red;
-    }
+.mainBox h3 {
+  margin-bottom: 20px;
+  font-size: 18px;
+  color: #333;
+  text-align: center;
+}
 
-    .led-off {
-      fill: gray;
-    }
+.mainBox svg {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 25px;
+  transition: transform 0.2s;
+}
 
-    .code-box {
-      width: 40%;
-      height: 850px;
-      font-family: 'Courier New', Courier, monospace;
-      font-size: 15px;
-      line-height: 1.6;
-      background-color: #1e1e1e;
-      color: #dcdcdc;
-      border: 1px solid #333;
-      border-radius: 10px;
-      padding: 20px;
-      resize: vertical;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-      overflow: auto;
-      white-space: pre;
-      transition: all 0.3s ease;
-      scrollbar-width: thin;
-      scrollbar-color: #555 #1e1e1e;
-    }
+.mainBox svg:hover {
+  transform: scale(1.05);
+}
 
-    .code-box:focus {
-      outline: none;
-      border-color: #66afe9;
-      box-shadow: 0 0 10px rgba(102, 175, 233, 0.6);
-    }
+svg image {
+  margin-top: 10px;
+  cursor: pointer;
+}
 
-    .code-box::-webkit-scrollbar {
-      width: 8px;
-    }
 
-    .code-box::-webkit-scrollbar-thumb {
-      background: #555;
-      border-radius: 8px;
-    }
+.code-box {
+  width: 42%;
+  height: 850px;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 15px;
+  line-height: 1.6;
+  background-color: #1e1e1e;
+  color: #dcdcdc;
+  border: 1px solid #333;
+  border-radius: 10px;
+  padding: 20px;
+  resize: vertical;
+  overflow: auto;
+  white-space: pre;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  scrollbar-width: thin;
+  scrollbar-color: #555 #1e1e1e;
+  margin-left: 80px;
+}
 
-    .code-box::-webkit-scrollbar-track {
-      background: #1e1e1e;
-    }
+.code-box:focus {
+  outline: none;
+  border-color: #66afe9;
+  box-shadow: 0 0 10px rgba(102, 175, 233, 0.6);
+}
+
+.code-box::-webkit-scrollbar {
+  width: 8px;
+}
+
+.code-box::-webkit-scrollbar-thumb {
+  background: #555;
+  border-radius: 8px;
+}
+
+.code-box::-webkit-scrollbar-track {
+  background: #1e1e1e;
+}
+
+
+.connection-point {
+  cursor: pointer;
+}
+
+.connection-point:hover {
+  fill: royalblue;
+}
+
+.led-on {
+  fill: red;
+}
+
+.led-off {
+  fill: gray;
+}
+
   </style>
+  
 
   <script src="https://unpkg.com/ohm-js@17/dist/ohm.js"></script>
 </head>
@@ -204,6 +222,8 @@
       <button id="btn2">Run Code</button>
       <button id="btn">Show Code</button>
       <button id="btn1">Hide Code</button>
+      <button id="stopBtn">Stop Simulation</button>
+
     </div>
   </nav>
 
@@ -227,14 +247,12 @@ void loop() {
       <h3>Components</h3>
 
       <svg>
-        <image id="led" href="led.png" width="100" height="100" />
+        <image id="led" href="led.png" width="100" height="100"  style="filter: brightness(0);"/>
       </svg>
       <svg>
         <image id="arduino" href="ArduinoUno.svg.png" width="100" height="100" />
       </svg>
-      <svg>
-        <image id="buzzer" href="buuzer.png" width="100" height="100" />
-      </svg>
+     
     </div>
   </div>
 

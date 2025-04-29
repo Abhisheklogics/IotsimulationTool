@@ -10,7 +10,11 @@ let offsetY = 0;
 let isDrawing = false;
 let currentWire = null; 
 const pinsArray = []; 
-  
+let loopRunning = true; // Add at the top
+
+// Stop button logic
+
+
 
 // ye code arduino ki compiler ki grammer bata hai
 const grammar = ohm.grammar(`
@@ -126,12 +130,21 @@ async function simulate(commands) {
   }
 }
 
+
 async function simulateLoop(commands) {
-  while (true) {
+  loopRunning = true; 
+  while (loopRunning) {
     await simulate(commands);
   }
-}   
-    
+}
+   
+document.getElementById("stopBtn").addEventListener("click", () => {
+  loopRunning = false;
+  const ledImg = document.getElementById("led");
+  if (ledImg) {
+    ledImg.style.filter = "brightness(0)"; // LED off
+  }
+}); 
 btn.addEventListener('click',()=>{
   text.style.display='block'
   text.style.height='200px'
