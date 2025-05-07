@@ -221,7 +221,7 @@ function createSvgComponent(path, width, height, x = 1000, y = 10) {
       createPin(svg, 270 + 24, 268 , 11, 10, `GND`);
       createPin(svg, 265, 268 , 11, 10, `3v`);
       createPin(svg, 346 + i *11,  22, 10, 10, `5v`); 
-      createPin(svg, 234 ,  22, 10, 10, `5v`);
+      createPin(svg, 234 ,  22, 10, 10, `13`);
       createPin(svg, 220 ,  22, 10, 10, ` GND`);
     }
   } else if (path.includes('led')) {
@@ -344,8 +344,7 @@ function finishWire(e) {
      
     });
     
-    console.log(connections[0].endPin.dataset.pin)
-   
+    console.log(connections)    
     if(connections.length > 0)
       {
         runCodeSimulation.addEventListener('click',()=>{
