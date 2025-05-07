@@ -169,17 +169,15 @@ function createPin(svg, x, y, width = 10, height = 10, pinNumber = '') {
   pin.setAttribute('height', height);
   pin.setAttribute('fill', 'black');
   pin.setAttribute('class', 'connection-point');
-  pin.setAttribute('data-pin', pinNumber); 
+  pin.setAttribute('data-pin', pinNumber); // Data pin number stored here
 
   const tooltip = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-tooltip.setAttribute('x', x + 12);
-tooltip.setAttribute('y', y);
-tooltip.setAttribute('visibility', 'hidden');
-tooltip.setAttribute('font-size', '14'); 
-tooltip.setAttribute('fill', 'blue');
-tooltip.textContent = `${pinNumber}`;
-
-
+  tooltip.setAttribute('x', x + 12);
+  tooltip.setAttribute('y', y);
+  tooltip.setAttribute('visibility', 'hidden');
+  tooltip.setAttribute('font-size', '14');
+  tooltip.setAttribute('fill', 'blue');
+  tooltip.textContent = `${pinNumber}`;
 
   pin.addEventListener('mouseenter', () => tooltip.setAttribute('visibility', 'visible'));
   pin.addEventListener('mouseleave', () => tooltip.setAttribute('visibility', 'hidden'));
@@ -189,14 +187,13 @@ tooltip.textContent = `${pinNumber}`;
   svg.appendChild(pin);
   svg.appendChild(tooltip);
 
-  
   pinsArray.push({
     pinNumber,
     pinElement: pin,
     component: svg.querySelector('image')?.getAttribute('id') || 'unknown'
   });
- 
 }
+
 
 
 // click event par svg arduino or led jasi component create kara na ka logic
@@ -223,8 +220,8 @@ function createSvgComponent(path, width, height, x = 1000, y = 10) {
       createPin(svg, 270 + 10, 268 , 11, 10, `5v`); 
       createPin(svg, 270 + 24, 268 , 11, 10, `GND`);
       createPin(svg, 265, 268 , 11, 10, `3v`);
-      createPin(svg, 346 + i *11,  22, 10, 10, `${i}`); 
-      createPin(svg, 234 ,  22, 10, 10, `13`);
+      createPin(svg, 346 + i *11,  22, 10, 10, `5v`); 
+      createPin(svg, 234 ,  22, 10, 10, `5v`);
       createPin(svg, 220 ,  22, 10, 10, ` GND`);
     }
   } else if (path.includes('led')) {
