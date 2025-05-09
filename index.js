@@ -158,18 +158,27 @@ btn1.addEventListener('click',()=>{
   text.style.display='none'
   
 })
-const connections = [];
- // pin crate karta hai arduino or leds par 
-
+let connections = [];
+// Create the pin on the SVG element
 function createPin(svg, x, y, width = 10, height = 10, pinNumber = '') {
   const pin = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
   pin.setAttribute('x', x);
   pin.setAttribute('y', y);
   pin.setAttribute('width', width);
-  pin.setAttribute('height', height);
+  pin.setAttribute('height', height); 
   pin.setAttribute('fill', 'black');
   pin.setAttribute('class', 'connection-point');
   pin.setAttribute('data-pin', pinNumber); // Data pin number stored here
+
+  // Default stroke color for all pins
+  pin.setAttribute('stroke', 'gray');
+  pin.setAttribute('stroke-width', 2);
+
+  // If the pin is a digital pin (e.g., pin 5V), change the style
+  if (pinNumber === '5v') {
+    pin.setAttribute('fill', 'gray'); // You can change this color as desired
+    pin.setAttribute('stroke', 'black');
+  }
 
   const tooltip = document.createElementNS('http://www.w3.org/2000/svg', 'text');
   tooltip.setAttribute('x', x + 12);
@@ -194,10 +203,95 @@ function createPin(svg, x, y, width = 10, height = 10, pinNumber = '') {
   });
 }
 
+// Modify the createSvgComponent function to add 28 pins to the Arduino
 
 
-// click event par svg arduino or led jasi component create kara na ka logic
-function createSvgComponent(path, width, height, x = 1000, y = 10) {
+
+ 
+
+
+
+let selectedComponent = null; 
+let selectedWire = null; 
+deleteBtn.addEventListener('click', () => {
+  if (selectedComponent) {
+    
+    deleteComponent(selectedComponent);
+    selectedComponent = null; 
+  } else if (selectedWire) {
+   
+    deleteWire(selectedWire);
+    selectedWire = null; 
+  } else {
+    alert('No component or wire selected. Click on a component or wire first to select it for deletion.');
+  }
+});
+
+
+function deleteComponent(svg) {
+ 
+  svg.remove();
+
+ 
+  const componentId = svg.querySelector('image')?.getAttribute('id');
+
+
+  const wiresToDelete = connections.filter(conn => {
+    const startComponent = conn.startPin.closest('svg').querySelector('image')?.getAttribute('id');
+    const endComponent = conn.endPin.closest('svg').querySelector('image')?.getAttribute('id');
+    return startComponent === componentId || endComponent === componentId;
+  });
+
+  wiresToDelete.forEach(conn => {
+    conn.wire.remove(); 
+  });
+
+ 
+  connections = connections.filter(conn => {
+    const startComponent = conn.startPin.closest('svg').querySelector('image')?.getAttribute('id');
+    const endComponent = conn.endPin.closest('svg').querySelector('image')?.getAttribute('id');
+    return startComponent !== componentId && endComponent !== componentId;
+  });
+
+  
+}
+
+
+
+
+
+
+function addDeleteListenerToComponent(svg) {
+  svg.addEventListener('click', function(e) {
+    e.stopPropagation(); 
+
+    selectedComponent = svg;
+    selectedWire = null; 
+  });
+}
+
+
+
+
+// Function to create wires and add delete listener
+function createWire(startPin, endPin) {
+  const wire = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+  wire.setAttribute('x1', startPin.x);
+  wire.setAttribute('y1', startPin.y);
+  wire.setAttribute('x2', endPin.x);
+  wire.setAttribute('y2', endPin.y);
+  wire.setAttribute('stroke', 'black');
+  wire.setAttribute('stroke-width', 2);
+
+  workspace.appendChild(wire);
+  connections.push({ wire, startPin, endPin });
+
+  // Add delete listener to the wire
+  addDeleteListenerToWire(wire);
+}
+
+// Modify the createSvgComponent function to add the delete listener for components
+function createSvgComponent(path, width, height, x = 788, y = 10) {
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   const image = document.createElementNS('http://www.w3.org/2000/svg', 'image');
 
@@ -212,35 +306,35 @@ function createSvgComponent(path, width, height, x = 1000, y = 10) {
   image.setAttribute('height', height);
   svg.appendChild(image);
 
-
   if (path.includes('Arduino')) {
-    image.setAttribute('id','arduino');
+    image.setAttribute('id', 'arduino');
     for (let i = 0; i < 7; i++) {
-      createPin(svg, 346 + i *11, height - 32, 10, 10, `A${i}`); 
-      createPin(svg, 270 + 10, 268 , 11, 10, `5v`); 
-      createPin(svg, 270 + 24, 268 , 11, 10, `GND`);
-      createPin(svg, 265, 268 , 11, 10, `3v`);
-      createPin(svg, 346 + i *11,  22, 10, 10, `5v`); 
-      createPin(svg, 234 ,  22, 10, 10, `13`);
-      createPin(svg, 220 ,  22, 10, 10, ` GND`);
+      createPin(svg, 346 + i * 11, height - 32, 10, 10, `A${i}`);
+      createPin(svg, 270 + 10, 268, 11, 10, `5v`);
+      createPin(svg, 270 + 24, 268, 11, 10, `GND`);
+      createPin(svg, 265, 268, 11, 10, `3v`);
+      createPin(svg, 346 + i * 11, 22, 10, 10, `5v`);
+      createPin(svg, 234, 22, 10, 10, `13`);
+      createPin(svg, 220, 22, 10, 10, `GND`);
     }
   } else if (path.includes('led')) {
-    image.style.filter=`brightness(0)`
-    image.setAttribute('id','led');
-    createPin(svg, width / 2 - 10, 70, 10, 10, 'Cathode'); 
-    createPin(svg, width / 2 + 2, 80, 10, 10, 'Anode'); 
+    image.style.filter = `brightness(0)`;
+    image.setAttribute('id', 'led');
+    createPin(svg, width / 2 - 10, 70, 10, 10, 'Cathode');
+    createPin(svg, width / 2 + 2, 80, 10, 10, 'Anode');
+  } else if (path.includes('buuzer')) {
+    createPin(svg, width / 2 - 13, 220, 10, 10, 'Cathode');
+    createPin(svg, width / 2 + 1, 220, 10, 10, 'Anode');
   }
-  else if (path.includes('buuzer')) {
-   
-    createPin(svg, width / 2 - 13, 220, 10, 10, 'Cathode'); 
-    createPin(svg, width / 2 + 1, 220, 10, 10, 'Anode'); 
-  }
-  
 
   svg.addEventListener('mousedown', startDrag);
-  document.removeEventListener('mousemove', drag);
   workspace.appendChild(svg);
+
+  // Add delete listener to the created component
+  addDeleteListenerToComponent(svg);
 }
+
+
 // components ko dag karne ka logic
 
 function startDrag(e) {
@@ -398,7 +492,5 @@ mainBox.addEventListener('mousedown', (e) => {
   } else if (target.id === 'arduino') {
     createSvgComponent('ArduinoUno.svg.png', 500, 300, 700, 110);
   }
-  else if (target.id === 'buzzer') {
-    createSvgComponent('buuzer.png', 150, 300, 1000, 110);
-  }
+ 
 })
