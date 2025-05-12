@@ -19,15 +19,17 @@ let loopRunning = true; // Add at the top
 // ye code arduino ki compiler ki grammer bata hai
 const grammar = ohm.grammar(`
   Arduino {
-   Program = VarDecl* Setup Loop
+    Program = VarDecl* Setup Loop
     Setup = "void" "setup" "()" Block
     Loop = "void" "loop" "()" Block
     Block = "{" Statement* "}"
-    Statement = VarDecl | PinMode | DigitalWrite | Delay
+    Statement = VarDecl | PinMode | DigitalWrite | Delay | Tone | NoTone
     VarDecl = "int" ident "=" Number ";"
     PinMode = "pinMode" "(" Expr "," Mode ")" ";"
     DigitalWrite = "digitalWrite" "(" Expr "," State ")" ";"
     Delay = "delay" "(" Expr ")" ";"
+    Tone = "tone" "(" Expr "," Expr ")" ";"
+    NoTone = "noTone" "(" Expr ")" ";"
     Mode = "OUTPUT" | "INPUT"
     State = "HIGH" | "LOW"
     Expr = ident | Number
@@ -35,6 +37,7 @@ const grammar = ohm.grammar(`
     Number = digit+
   }
 `);
+
 const semantics = grammar.createSemantics().addOperation("eval(memory)", {
  Program(decls, setup, loop) {
   const memory = {};
@@ -92,7 +95,21 @@ const semantics = grammar.createSemantics().addOperation("eval(memory)", {
   },
   Number(_) {
     return parseInt(this.sourceString);
-  }
+  },
+  Tone(_1, _2, pin, _3, freq, _4, _5) {
+  return {
+    type: "tone",
+    pin: pin.eval(this.args.memory),
+    freq: freq.eval(this.args.memory)
+  };
+},
+NoTone(_1, _2, pin, _3, _4) {
+  return {
+    type: "noTone",
+    pin: pin.eval(this.args.memory)
+  };
+}
+
 });
 async function runCode() {
   const code = document.getElementById("codeInput").value;
@@ -108,35 +125,56 @@ async function runCode() {
   }
 }
 
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+let buzzerOscillator = null; 
 async function simulate(commands) {
   const ledImg = document.getElementsByClassName("newled");
-  
-let arr=['13','6','5','4','3','2','1','0']
+  const buzzer = document.getElementById("buzzer");
+
+  let validPins = ['13', '6', '5', '4', '3', '2', '1', '0'];
+
   for (const cmd of commands) {
     if (cmd.type === "digitalWrite") {
-      for(let i=0; i<arr.length;i++)
-      {
-     if (cmd.pin == arr[i]) {
-      for(let i=0; i<ledImg.length;i++)
-      {
- ledImg[i].style.filter = cmd.state === "HIGH" ? "brightness(1.4)" : "brightness(0)";
+      if (validPins.includes(cmd.pin.toString())) {
+        for (let i = 0; i < ledImg.length; i++) {
+          ledImg[i].style.filter = cmd.state === "HIGH" ? "brightness(1.4)" : "brightness(0)";
+        }
       }
+    } else if (cmd.type === "tone") {
+      if (buzzer) {
+        buzzer.style.backgroundColor = "red";
+        buzzer.innerText = `Buzzing ${cmd.freq}Hz`;
+
        
+        if (!buzzerOscillator) {
+          buzzerOscillator = audioCtx.createOscillator();
+          const gainNode = audioCtx.createGain();
+          buzzerOscillator.type = "square";
+          buzzerOscillator.frequency.setValueAtTime(cmd.freq, audioCtx.currentTime);
+          buzzerOscillator.connect(gainNode);
+          gainNode.connect(audioCtx.destination);
+          buzzerOscillator.start();
+        }
       }
-       else{
-        
-       
-          console.log('galat')
-        
-      } 
+    } else if (cmd.type === "noTone") {
+      if (buzzer) {
+        buzzer.style.backgroundColor = "gray";
+        buzzer.innerText = "Silent";
       }
+
      
-     
+      if (buzzerOscillator) {
+        buzzerOscillator.stop();
+        buzzerOscillator.disconnect();
+        buzzerOscillator = null;
+      }
     } else if (cmd.type === "wait") {
       await new Promise(res => setTimeout(res, cmd.delay));
     }
   }
 }
+
+
 
 
 async function simulateLoop(commands) {
@@ -332,9 +370,10 @@ function createSvgComponent(path, width, height, x = 788, y = 10) {
     createPin(svg, width / 2 - 10, 70, 10, 10, 'Cathode');
     createPin(svg, width / 2 + 2, 80, 10, 10, 'Anode');
   } else if (path.includes('buuzer')) {
-    createPin(svg, width / 2 - 13, 220, 10, 10, 'Cathode');
-    createPin(svg, width / 2 + 1, 220, 10, 10, 'Anode');
+    createPin(svg, 35, 140, 10, 10, 'Cathode');
+    createPin(svg, 50, 140, 10, 10, 'Anode');
   }
+  
 
   svg.addEventListener('mousedown', startDrag);
   workspace.appendChild(svg);
@@ -523,6 +562,9 @@ mainBox.addEventListener('mousedown', (e) => {
     createSvgComponent('led.png', 100, 100);
   } else if (target.id === 'arduino') {
     createSvgComponent('ArduinoUno.svg.png', 500, 300, 700, 110);
+  }
+  else if (target.id === 'buzzer') {
+    createSvgComponent('buuzer.png', 100, 200, 800, 110);
   }
  
 })
