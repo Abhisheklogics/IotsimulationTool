@@ -184,25 +184,31 @@
 
     <div class="mainBox">
       <textarea id="codeInput" class="code-box">
+int led = 13;
+
 void setup() {
-  pinMode(13, OUTPUT);
+  pinMode(led, OUTPUT);
 }
 
 void loop() {
-  digitalWrite(13, HIGH);   
-  delay(1000);                  
-  digitalWrite(13, LOW);   
-  delay(1000);                  
+  digitalWrite(led, HIGH);
+  delay(1000);
+  digitalWrite(led, LOW);
+  delay(1000);
 }
+      
       </textarea>
 
       <h3>Components</h3>
 
       <svg>
-        <image id="led" href="led.png" width="100" height="100" style="filter: brightness(0);" />
+        <image id="led" class="allled" href="led.png" width="100" height="100" style="filter: brightness(0);"/>
       </svg>
       <svg>
         <image id="arduino" href="ArduinoUno.svg.png" width="100" height="100" />
+      </svg>
+       <svg>
+        <image id="buzzer" href="buuzer.png" width="100" height="100" />
       </svg>
     </div>
   </div>

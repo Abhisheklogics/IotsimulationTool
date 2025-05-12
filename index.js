@@ -19,7 +19,7 @@ let loopRunning = true; // Add at the top
 // ye code arduino ki compiler ki grammer bata hai
 const grammar = ohm.grammar(`
   Arduino {
-    Program = Setup Loop
+   Program = VarDecl* Setup Loop
     Setup = "void" "setup" "()" Block
     Loop = "void" "loop" "()" Block
     Block = "{" Statement* "}"
@@ -36,13 +36,14 @@ const grammar = ohm.grammar(`
   }
 `);
 const semantics = grammar.createSemantics().addOperation("eval(memory)", {
-  Program(setup, loop) {
-    const memory = {};
-    return {
-      setup: setup.eval(memory),
-      loop: loop.eval(memory)
-    };
-  },
+ Program(decls, setup, loop) {
+  const memory = {};
+  decls.children.forEach(d => d.eval(memory));
+  return {
+    setup: setup.eval(memory),
+    loop: loop.eval(memory)
+  };
+},
   Setup(_1, _2, _3, block) {
     return block.eval(this.args.memory);
   },
@@ -108,22 +109,29 @@ async function runCode() {
 }
 
 async function simulate(commands) {
-  const ledImg = document.getElementById("led");
+  const ledImg = document.getElementsByClassName("newled");
   
-
+let arr=['13','6','5','4','3','2','1','0']
   for (const cmd of commands) {
     if (cmd.type === "digitalWrite") {
-      if (cmd.pin == connections[0].endPin.dataset.pin) {
-      
-        ledImg.style.filter = cmd.state === "HIGH" ? "brightness(1.4)" : "brightness(0)";
+      for(let i=0; i<arr.length;i++)
+      {
+     if (cmd.pin == arr[i]) {
+      for(let i=0; i<ledImg.length;i++)
+      {
+ ledImg[i].style.filter = cmd.state === "HIGH" ? "brightness(1.4)" : "brightness(0)";
       }
-      else{
+       
+      }
+       else{
         
-        setTimeout(()=>{
-          alert('sahi se connection karo ')
-          document.removeEventListener('click',runCode)
-        },1000)
+       
+          console.log('galat')
+        
       } 
+      }
+     
+     
     } else if (cmd.type === "wait") {
       await new Promise(res => setTimeout(res, cmd.delay));
     }
@@ -313,13 +321,14 @@ function createSvgComponent(path, width, height, x = 788, y = 10) {
       createPin(svg, 270 + 10, 268, 11, 10, `5v`);
       createPin(svg, 270 + 24, 268, 11, 10, `GND`);
       createPin(svg, 265, 268, 11, 10, `3v`);
-      createPin(svg, 346 + i * 11, 22, 10, 10, `5v`);
+      createPin(svg, 346 + i * 11, 22, 10, 10, `${6-i}`);
       createPin(svg, 234, 22, 10, 10, `13`);
       createPin(svg, 220, 22, 10, 10, `GND`);
     }
   } else if (path.includes('led')) {
     image.style.filter = `brightness(0)`;
     image.setAttribute('id', 'led');
+    image.setAttribute('class', 'newled'); 
     createPin(svg, width / 2 - 10, 70, 10, 10, 'Cathode');
     createPin(svg, width / 2 + 2, 80, 10, 10, 'Anode');
   } else if (path.includes('buuzer')) {
@@ -373,7 +382,7 @@ function startWire(e, pin) {
 console.log(pin)
  
   const workspaceRect = workspace.getBoundingClientRect();
-  console.log(workspaceRect)
+ 
   const pinRect = pin.getBoundingClientRect();
 
 
@@ -438,13 +447,36 @@ function finishWire(e) {
      
     });
     
-    console.log(connections)    
-    if(connections.length > 0)
+  for(let i=0; i < connections.length; i++)
+    {
+      console.log(connections[i])
+      if((connections[i].startPin.dataset.pin=='Anode' && connections[i].endPin.dataset.pin=='GND') || (connections[i].startPin.dataset.pin=='13' && connections[i].endPin.dataset.pin=='Cathode') 
+        || (connections[i].startPin.dataset.pin=='6' && connections[i].endPin.dataset.pin=='Cathode') || (connections[i].startPin.dataset.pin=='5' && connections[i].endPin.dataset.pin=='Cathode')
+      || (connections[i].startPin.dataset.pin=='4' && connections[i].endPin.dataset.pin=='Cathode')
+      || (connections[i].startPin.dataset.pin=='3' && connections[i].endPin.dataset.pin=='Cathode')
+    
+      || (connections[i].startPin.dataset.pin=='2' && connections[i].endPin.dataset.pin=='Cathode')
+      || (connections[i].startPin.dataset.pin=='1' && connections[i].endPin.dataset.pin=='Cathode')
+      || (connections[i].startPin.dataset.pin=='0' && connections[i].endPin.dataset.pin=='Cathode')
+    
+    
+    
+    )
       {
-        runCodeSimulation.addEventListener('click',()=>{
+        alert('galat connection hai')
+      }
+      else{
+         runCodeSimulation.addEventListener('click',()=>{
           runCode()
         })
       }
+    }    
+    // if(connections.length > 0)
+    //   {
+    //     runCodeSimulation.addEventListener('click',()=>{
+    //       runCode()
+    //     })
+    //   }
   } else {
    
     workspace.removeChild(currentWire);
